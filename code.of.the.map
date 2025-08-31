@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tomato Camps in Italy - Interactive Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            margin: 20px;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #ecf0f1;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .main-content {
+                flex-direction: row;
+            }
+        }
+        
+        .map-container {
+            flex: 1;
+            height: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 100%;
+            padding: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .sidebar {
+                width: 300px;
+                margin-left: 20px;
+            }
+        }
+        
+        .info-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .data-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .data-item {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .instructions {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .read-more-btn {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            z-index: 1000;
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .read-more-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .custom-popup {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .custom-popup b {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tomato Camps in Italy</h1>
+            <p class="description">Mapping labor conditions and fatalities in Italian agricultural camps</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="map-container">
+                <div id="map"></div>
+                <a href="https://drive.google.com/file/d/1G34e5CH9IUTFoij1A7xDuEy1PYX-R6Kp/view?usp=drive_link" target="_blank" class="read-more-btn">Read More</a>
+            </div>
+            
+            <div class="sidebar">
+                <div class="info-panel">
+                    <h2>About This Map</h2>
+                    <p>This interactive map visualizes tomato farming camps across Italy, showing daily salary rates (in Euros) and reported deaths of immigrant workers.</p>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffffcc;"></div>
+                            <span>Low Salary</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #a1dab4;"></div>
+                            <span>Medium Salary</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #41b6c4;"></div>
+                            <span>High Salary</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #225ea8;"></div>
+                            <span>Very High Salary</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-panel">
+                    <h2>Key Statistics</h2>
+                    <p>The data reveals significant disparities in working conditions across different regions of Italy.</p>
+                    
+                    <div class="data-points">
+                        <div class="data-item">Total Deaths: 150</div>
+                        <div class="data-item">Avg. Salary: €26.75</div>
+                        <div class="data-item">Camps: 20</div>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h2>How to Use This Map</h2>
+                    <p>Click on any marker to see detailed information about that tomato camp, including:</p>
+                    <ul>
+                        <li>Region</li>
+                        <li>Daily salary (in Euros)</li>
+                        <li>Number of reported deaths</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Created from R code analysis | Tomato Camps Research</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map centered on Italy
+        const map = L.map('map').setView([41.8719, 12.5674], 6);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add satellite imagery option
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }).addTo(map);
+        
+        // Define the tomato camps data
+        const camps = [
+            {name: "Parma Stuard Experimental", lat: 44.80787, lng: 10.27467, deaths: 2, salary: 30, region: "Emilia-Romagna"},
+            {name: "Capitanata Foggia Industria", lat: 41.543, lng: 15.504, deaths: 43, salary: 20, region: "Puglia"},
+            {name: "Campolattaro Campania", lat: 41.28587, lng: 14.72685, deaths: 29, salary: 25, region: "Campania"},
+            {name: "Campoleone Lazio", lat: 41.6424, lng: 12.64834, deaths: 15, salary: 40, region: "Lazio"},
+            {name: "Campolieto Monacilioni Molise", lat: 41.64257, lng: 14.76544, deaths: 8, salary: 20, region: "Molise"},
+            {name: "Campomarino Molise", lat: 41.9574, lng: 15.04242, deaths: 0, salary: 35, region: "Molise"},
+            {name: "Campobello Ravanusa Sicilia", lat: 37.26573, lng: 13.94625, deaths: 2, salary: 15, region: "Sicilia"},
+            {name: "Campofelice Sicilia", lat: 37.99262, lng: 13.87655, deaths: 1, salary: 22, region: "Sicilia"},
+            {name: "Campofranco Sicilia", lat: 37.51011, lng: 13.68678, deaths: 3, salary: 45, region: "Sicilia"},
+            {name: "Campomela Sardegna", lat: 40.68139, lng: 8.63888, deaths: 2, salary: 20, region: "Sardegna"},
+            {name: "Pomodoro Pollicino Liguria", lat: 44.3, lng: 8.5, deaths: 5, salary: 20, region: "Liguria"},
+            {name: "Pachino IGP Sicilia", lat: 36.752, lng: 14.97, deaths: 1, salary: 25, region: "Sicilia"},
+            {name: "San Marzano IGP Campania", lat: 40.8, lng: 14.6, deaths: 2, salary: 30, region: "Campania"},
+            {name: "Pomodoro di Napoli IGP", lat: 40.835, lng: 14.25, deaths: 3, salary: 35, region: "Campania"},
+            {name: "Pomodoro di Colfiorito Umbria", lat: 43.083, lng: 12.766, deaths: 2, salary: 25, region: "Umbria"},
+            {name: "Pomodoro di Galatina Puglia", lat: 40.105, lng: 18.12, deaths: 0, salary: 30, region: "Puglia"},
+            {name: "Pomodoro del Piennolo Campania", lat: 40.842, lng: 14.433, deaths: 5, salary: 27, region: "Campania"},
+            {name: "Pomodoro di Secu Calabria", lat: 38.7, lng: 16.25, deaths: 1, salary: 33, region: "Calabria"},
+            {name: "Pomodoro di Cinises Sardegna", lat: 39.292, lng: 9.005, deaths: 0, salary: 19, region: "Sardegna"},
+            {name: "Pomodoro di Belmonte Calabria", lat: 39.68, lng: 16.25, deaths: 7, salary: 20, region: "Calabria"}
+        ];
+        
+        // Create a color scale based on salary
+        function getColor(salary) {
+            return salary > 40 ? '#225ea8' :
+                   salary > 30 ? '#41b6c4' :
+                   salary > 25 ? '#a1dab4' :
+                   salary > 20 ? '#ffffcc' :
+                   '#ffeda0';
+        }
+        
+        // Add markers for each camp
+        camps.forEach(camp => {
+            L.circleMarker([camp.lat, camp.lng], {
+                radius: 8,
+                fillColor: getColor(camp.salary),
+                color: "#000",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map).bindPopup(`
+                <div class="custom-popup">
+                    <h3>${camp.name}</h3>
+                    <p><b>Region:</b> ${camp.region}</p>
+                    <p><b>Daily Salary:</b> €${camp.salary}</p>
+                    <p><b>Reported Deaths:</b> ${camp.deaths}</p>
+                </div>
+            `);
+        });
+        
+        // Add legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            const grades = [0, 20, 25, 30, 40];
+            const labels = [];
+            let from, to;
+            
+            div.innerHTML = '<h4>Daily Salary (€)</h4>';
+            
+            for (let i = 0; i < grades.length; i++) {
+                from = grades[i];
+                to = grades[i + 1];
+                
+                labels.push(
+                    '<i style="background:' + getColor(from + 1) + '; width: 18px; height: 18px; display: inline-block; margin-right: 5px; border-radius: 50%;"></i> ' +
+                    from + (to ? '&ndash;' + to : '+'));
+            }
+            
+            div.innerHTML += labels.join('<br>');
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
